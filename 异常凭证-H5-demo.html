@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="app-static-version" content="V2.0" />
+  <title>异常凭证</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --muted: #f5f5f5;
+      --text: #1a1a1a;
+      --sub: #666;
+      --blue: #1890ff;
+      --yellow-bg: #fffbe6;
+      --yellow-border: #ffe58f;
+      --yellow-text: #d48806;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 428px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 16px 16px 32px;
+      padding-bottom: calc(32px + env(safe-area-inset-bottom));
+    }
+    .headline { font-size: 22px; font-weight: 700; line-height: 1.35; margin-bottom: 14px; letter-spacing: -0.02em; }
+    .order-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 10px; }
+    .tag-serial {
+      display: inline-block; padding: 2px 10px; font-size: 13px; font-weight: 600;
+      color: var(--yellow-text); background: var(--yellow-bg); border: 1px solid var(--yellow-border); border-radius: 4px;
+    }
+    .order-no { font-size: 14px; font-weight: 500; word-break: break-all; }
+    .status-done { font-size: 14px; color: var(--blue); font-weight: 500; }
+    .ticket-row { font-size: 13px; color: var(--sub); margin-bottom: 12px; }
+    .ticket-row strong { color: var(--text); font-weight: 600; }
+    .desc-box { background: var(--muted); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: #333; line-height: 1.55; margin-bottom: 20px; }
+    .desc-box .label { color: var(--sub); font-size: 13px; margin-bottom: 6px; }
+    .compare-title { font-size: 13px; color: var(--sub); margin-bottom: 10px; font-weight: 600; }
+    .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+    .compare-card { background: var(--muted); border-radius: 8px; padding: 12px 10px; font-size: 12px; line-height: 1.55; color: #333; }
+    .compare-card .source { font-size: 11px; color: #999; margin-bottom: 8px; font-weight: 600; }
+    .compare-card .row { margin-bottom: 4px; word-break: break-all; }
+    .rx-tag {
+      display: inline-block; margin-top: 8px; padding: 2px 8px; font-size: 11px; color: #cf1322;
+      background: #fff1f0; border: 1px solid #ffa39e; border-radius: 2px;
+    }
+    .section-title { font-size: 15px; font-weight: 600; margin: 22px 0 12px; color: var(--text); }
+    .img-mosaic {
+      display: grid; grid-template-columns: 1.15fr 1fr; grid-template-rows: minmax(86px, 1fr) minmax(86px, 1fr);
+      gap: 8px; margin-bottom: 8px;
+    }
+    .img-mosaic .cell-main { grid-row: 1 / -1; grid-column: 1; min-height: 180px; border-radius: 8px; overflow: hidden; background: #e8e8e8; }
+    .img-mosaic .cell { border-radius: 8px; overflow: hidden; background: #e8e8e8; min-height: 86px; }
+    .img-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-ph {
+      width: 100%; height: 100%; min-height: 86px; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #8c8c8c; text-align: center; padding: 8px; background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+    }
+    .cell-main .img-ph { min-height: 180px; }
+    .footer-note {
+      margin-top: 28px; padding-top: 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #999; text-align: center; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="headline" id="headline">我发现美团商品与实物不一致！</h1>
+    <div class="order-bar">
+      <span class="tag-serial" id="tagSerial">75#</span>
+      <span class="order-no" id="extOrderNo">3201868612401177</span>
+      <span class="status-done" id="ticketStatus">已完成</span>
+    </div>
+    <div class="ticket-row">工单编号：<strong id="ticketNo">GD1222312</strong></div>
+    <div class="desc-box">
+      <div class="label">异常描述</div>
+      <div id="excDescText">美团的规格和实物的规格不一致，美团图片是喷雾型，实物不是，顾客表示需要退货</div>
+    </div>
+    <div class="compare-title">商品信息对比</div>
+    <div class="compare-row">
+      <div class="compare-card">
+        <div class="source">美团挂网商品信息</div>
+        <div class="row" id="mtBrand">[三九] 999</div>
+        <div class="row" id="mtName">胃泰颗粒 20g×9袋</div>
+        <div class="row" id="mtBarcode">条码：6965465135548</div>
+        <div class="row" id="mtApproval">批准文号：国药准字H54151545</div>
+        <div class="row" id="mtFactory">生产企业：广东华润顺峰药业有限公司</div>
+        <span class="rx-tag" id="mtRx">处方药</span>
+      </div>
+      <div class="compare-card">
+        <div class="source">仓店实物/系统信息</div>
+        <div class="row" id="stBrand">[三九] 999</div>
+        <div class="row" id="stName">胃泰颗粒 20g×6袋（仓店批次）</div>
+        <div class="row" id="stBarcode">内部码：69658…</div>
+        <div class="row" id="stApproval">批准文号：国药准字H54151545</div>
+        <div class="row" id="stFactory">生产企业：广东华润顺峰药业有限公司</div>
+        <span class="rx-tag" id="stRx">处方药</span>
+      </div>
+    </div>
+    <div class="section-title">美团挂网图片</div>
+    <div class="img-mosaic" id="mtImages"></div>
+    <div class="section-title">仓店实物图片</div>
+    <div class="img-mosaic" id="stImages"></div>
+    <p class="footer-note">
+      本页由复核台异常工单自动生成，用于微信群内同步凭证。<br />
+      链接中的 <code>v</code> 参数用于发版区分缓存；正式环境由服务端签发短链与鉴权。
+    </p>
+  </div>
+  <script>
+    (function () {
+      function getParam(key, def) {
+        var q = new URLSearchParams(window.location.search);
+        var v = q.get(key);
+        return v !== null && v !== "" ? v : def;
+      }
+      var ticket = getParam("ticket", "GD1222312");
+      var serial = getParam("serial", "75");
+      var extOrder = getParam("extOrder", "3201868612401177");
+      var desc = getParam("desc", "美团的规格和实物的规格不一致，美团图片是喷雾型，实物不是，顾客表示需要退货");
+      var excType = getParam("excType", "meituan_mismatch");
+      var scope = getParam("scope", "line");
+      var line = getParam("line", "");
+      var platformProduct = getParam("platformProduct", "");
+      var storeProduct = getParam("storeProduct", "");
+      var headlines = {
+        meituan_mismatch: "我发现美团商品与实物不一致！",
+        short: "分拣复核异常：缺货/少货说明",
+        wrong: "分拣复核异常：错品/错批号说明",
+        damage: "分拣复核异常：破损/质量问题说明",
+        trace: "分拣复核异常：溯源码异常说明",
+        duplicate: "分拣复核异常：订单重复说明",
+        other: "分拣复核异常说明",
+      };
+      document.getElementById("headline").textContent = headlines[excType] || headlines.other;
+      document.getElementById("tagSerial").textContent = serial + "#";
+      document.getElementById("extOrderNo").textContent = extOrder;
+      document.getElementById("ticketNo").textContent = ticket;
+      document.getElementById("excDescText").textContent = desc;
+      if (platformProduct) document.getElementById("mtName").textContent = platformProduct;
+      if (storeProduct) document.getElementById("stName").textContent = storeProduct;
+      else if (platformProduct) document.getElementById("stName").textContent = platformProduct + "（仓店实物与挂网不一致）";
+      if (scope === "line" && line) {
+        document.getElementById("stBarcode").textContent =
+          "复核明细序号：" + line + " · " + document.getElementById("stBarcode").textContent;
+      }
+      function buildMosaic(containerId, seedPrefix) {
+        var el = document.getElementById(containerId);
+        var urls = [
+          "https://picsum.photos/seed/" + seedPrefix + "m0/600/800",
+          "https://picsum.photos/seed/" + seedPrefix + "m1/400/400",
+          "https://picsum.photos/seed/" + seedPrefix + "m2/400/400",
+          "https://picsum.photos/seed/" + seedPrefix + "m3/400/400",
+          "https://picsum.photos/seed/" + seedPrefix + "m4/400/400",
+        ];
+        function cell(main, url, phText) {
+          var d = document.createElement("div");
+          d.className = main ? "cell-main" : "cell";
+          var img = document.createElement("img");
+          img.alt = "凭证图";
+          img.loading = "lazy";
+          img.src = url;
+          img.onerror = function () {
+            d.innerHTML = "";
+            var ph = document.createElement("div");
+            ph.className = "img-ph";
+            ph.textContent = phText;
+            d.appendChild(ph);
+          };
+          d.appendChild(img);
+          return d;
+        }
+        el.appendChild(cell(true, urls[0], "主图（演示占位）"));
+        for (var i = 1; i <= 4; i++) el.appendChild(cell(false, urls[i], "细节图 " + i));
+      }
+      buildMosaic("mtImages", "voucher");
+      buildMosaic("stImages", "voucher");
+    })();
+  </script>
+</body>
+</html>

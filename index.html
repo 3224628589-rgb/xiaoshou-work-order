@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 发版时与脚本中 APP_STATIC_VERSION 同步修改，用于缓存与排查 -->
+  <meta name="app-static-version" content="V2.0" />
+  <title>邻药汇仓店管理系统</title>
+  <style>
+    :root {
+      --bg-page: #f0f2f5;
+      --bg-card: #fff;
+      --sidebar-bg: #fff;
+      --sidebar-border: #e8e8e8;
+      --sidebar-text: rgba(0, 0, 0, 0.65);
+      --sidebar-active-text: #1890ff;
+      --border: #e8e8e8;
+      --text: #333;
+      --text-secondary: #666;
+      --green: #52c41a;
+      --green-hover: #73d13d;
+      --red: #ff4d4f;
+      --header-h: 48px;
+      --highlight-green: #32cd32;
+      --modal-blue: #1890ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg-page);
+      min-height: 100vh;
+      overflow-x: auto;
+    }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 220px; flex-shrink: 0; background: var(--sidebar-bg); color: var(--sidebar-text);
+      padding: 16px 0; display: flex; flex-direction: column; border-right: 1px solid var(--sidebar-border);
+    }
+    .sidebar-logo {
+      padding: 0 24px 20px; color: var(--text); font-size: 15px; font-weight: 600;
+      border-bottom: 1px solid var(--sidebar-border); margin-bottom: 8px;
+    }
+    .nav-item { padding: 10px 24px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .nav-item:hover { color: var(--sidebar-active-text); background: #fafafa; }
+    .nav-group-title { padding: 10px 24px 6px; font-size: 12px; color: rgba(0, 0, 0, 0.45); }
+    .nav-sub { padding-left: 36px; font-size: 13px; }
+    .nav-sub.active { background: #e6f7ff; color: var(--sidebar-active-text); font-weight: 500; }
+    .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: var(--header-h); background: var(--bg-card); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: flex-end; padding: 0 24px; flex-shrink: 0;
+    }
+    .user-name { color: var(--text-secondary); }
+    .tabs-bar {
+      background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 16px;
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0; flex-wrap: wrap;
+    }
+    .tab {
+      padding: 10px 14px; color: var(--text-secondary); border: 1px solid transparent; border-bottom: none;
+      margin-bottom: -1px; cursor: pointer; border-radius: 4px 4px 0 0; display: flex; align-items: center; gap: 6px;
+    }
+    .tab:hover { color: #1890ff; }
+    .tab.active { color: #1890ff; background: var(--bg-page); border-color: var(--border); font-weight: 500; }
+    .content { flex: 1; padding: 16px 24px 32px; overflow: auto; }
+    .main-view { display: none; }
+    .main-view.active { display: block; }
+    .card {
+      background: var(--bg-card); border-radius: 8px; padding: 20px 24px 24px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03); border: 1px solid var(--border);
+    }
+    .order-title-row { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .order-title-row h1 { font-size: 16px; font-weight: 600; color: var(--text); }
+    .order-meta-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 16px; }
+    .order-detail-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+    .btn-exception {
+      background: var(--green); color: #fff; border: none; padding: 6px 16px; border-radius: 4px;
+      font-size: 14px; cursor: pointer; font-weight: 500;
+    }
+    .btn-exception:hover { background: var(--green-hover); }
+    .btn-exception.small { padding: 4px 12px; font-size: 13px; }
+    .total-summary { color: var(--text-secondary); font-size: 14px; }
+    .order-meta {
+      flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 24px;
+    }
+    .meta-item { display: flex; gap: 8px; line-height: 1.5; }
+    .meta-label { color: var(--text-secondary); flex-shrink: 0; }
+    .meta-value { color: var(--text); word-break: break-all; }
+    .meta-value.danger { color: var(--red); }
+    .order-head-zone {
+      position: relative; border-radius: 6px; margin: -4px; padding: 4px; transition: box-shadow 0.15s ease;
+    }
+    .order-head-zone.order-exc-hover {
+      box-shadow: 0 0 0 2px var(--highlight-green); background: rgba(50, 205, 50, 0.04);
+    }
+    .search-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-input {
+      flex: 1; min-width: 240px; height: 40px; border: 1px solid var(--border); border-radius: 20px;
+      padding: 0 20px; font-size: 14px; outline: none;
+    }
+    .search-input:focus { border-color: #40a9ff; box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2); }
+    .section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
+    table.review-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+    .review-table th, .review-table td {
+      padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+    .review-table th { background: #fafafa; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
+    .review-table tr:last-child td { border-bottom: none; }
+    .review-table tbody tr:hover { background: #fafafa; }
+    .review-table tbody tr.row-exc-hover,
+    .review-table tbody tr.row-exc-hover:hover { background: #f6fff6; }
+    .review-table tbody tr.row-exc-hover > td {
+      border-top: 2px solid var(--highlight-green) !important; border-bottom: 2px solid var(--highlight-green) !important;
+    }
+    .review-table tbody tr.row-exc-hover > td:first-child { border-left: 2px solid var(--highlight-green); }
+    .review-table tbody tr.row-exc-hover > td:last-child { border-right: 2px solid var(--highlight-green); }
+    .thumb {
+      width: 48px; height: 48px; border-radius: 4px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 12px; color: #8c8c8c;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e6f7e6 100%);
+    }
+    .qty-red { color: var(--red); font-weight: 500; }
+    .status-cell { display: flex; align-items: center; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; color: var(--red); font-size: 13px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+    .stepper { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    .stepper button {
+      width: 32px; height: 32px; border: none; background: #fafafa; cursor: pointer; font-size: 16px; color: var(--text-secondary);
+    }
+    .stepper button:hover { color: #1890ff; }
+    .stepper input {
+      width: 48px; height: 32px; border: none; border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+      text-align: center; font-size: 14px;
+    }
+    .footer-actions {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 8px 20px; border-radius: 4px; font-size: 14px; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text);
+    }
+    .btn:hover { color: #1890ff; border-color: #1890ff; }
+    .btn-primary-green { background: var(--green); color: #fff; border-color: var(--green); }
+    .btn-primary-green:hover { background: var(--green-hover); border-color: var(--green-hover); color: #fff; }
+    .btn-disabled {
+      opacity: 0.45; cursor: not-allowed; background: #f5f5f5; color: var(--text-secondary); border-color: var(--border);
+    }
+    .btn-disabled:hover { color: var(--text-secondary); border-color: var(--border); }
+    .exception-hover-tip {
+      position: fixed; z-index: 900; left: 0; top: 0; max-width: 280px; padding: 8px 12px; font-size: 13px; line-height: 1.4;
+      color: #333; background: #fff; border: 1px solid var(--highlight-green); border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); pointer-events: none; opacity: 0; visibility: hidden;
+      transform: translate(-50%, calc(-100% - 10px)); transition: opacity 0.12s ease;
+    }
+    .exception-hover-tip.show { opacity: 1; visibility: visible; }
+    .exception-hover-tip::after {
+      content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px;
+      border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid var(--highlight-green);
+    }
+    .exception-hover-tip::before {
+      content: ""; position: absolute; left: 50%; bottom: -5px; margin-left: -5px; z-index: 1;
+      border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #fff;
+    }
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 1000;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 8px; width: 100%; max-width: 560px; max-height: 90vh; overflow: auto;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    }
+    .modal-head {
+      padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 20px 20px 8px; }
+    .modal-field-label { display: block; margin-bottom: 8px; color: var(--text); font-size: 14px; }
+    .modal-body select, .modal-body textarea {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; font-family: inherit; background: #fff;
+    }
+    .modal-body select { margin-bottom: 18px; cursor: pointer; min-height: 36px; }
+    .quick-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .quick-tag {
+      padding: 6px 12px; font-size: 13px; color: var(--text-secondary); background: #f5f5f5;
+      border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
+    }
+    .quick-tag:hover { background: #e6f7ff; border-color: #91d5ff; color: var(--modal-blue); }
+    .modal-body textarea { min-height: 96px; resize: vertical; margin-bottom: 18px; }
+    .upload-hint-bar {
+      font-size: 13px; color: var(--text-secondary); background: #fafafa; border: 1px solid var(--border);
+      border-radius: 4px; padding: 8px 12px; margin-bottom: 10px;
+    }
+    .upload-zone {
+      border: 1px dashed var(--border); border-radius: 6px; padding: 28px 16px; text-align: center; cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .upload-zone:hover { border-color: var(--modal-blue); background: #fafafa; }
+    .upload-zone .upload-main { font-size: 14px; color: var(--text); margin-bottom: 6px; }
+    .upload-zone .upload-sub { font-size: 12px; color: #999; }
+    .upload-file-list { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .modal-foot { padding: 14px 20px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+    .btn-modal-primary {
+      padding: 8px 24px; border-radius: 4px; font-size: 14px; cursor: pointer;
+      border: 1px solid var(--modal-blue); background: var(--modal-blue); color: #fff;
+    }
+    .btn-modal-primary:hover { background: #40a9ff; border-color: #40a9ff; }
+    .modal-context-hint { font-size: 12px; color: #999; margin-bottom: 14px; line-height: 1.5; }
+    .share-link-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 1100;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .share-link-overlay.show { display: flex; }
+    .share-link-box { background: #fff; border-radius: 8px; width: 100%; max-width: 520px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18); overflow: hidden; }
+    .share-link-body { padding: 20px 20px 16px; }
+    .share-link-tip { font-size: 15px; color: var(--text); line-height: 1.55; margin-bottom: 16px; }
+    .share-link-row {
+      display: flex; align-items: stretch; gap: 10px; border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; background: #fafafa;
+    }
+    .share-link-url { flex: 1; min-width: 0; font-size: 13px; line-height: 1.45; word-break: break-all; color: #333; user-select: all; }
+    .btn-copy-link {
+      flex-shrink: 0; width: 40px; height: 40px; padding: 0; border: 1px solid var(--border); border-radius: 6px;
+      background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);
+    }
+    .btn-copy-link:hover { color: var(--modal-blue); border-color: var(--modal-blue); background: #e6f7ff; }
+    .share-link-foot { padding: 12px 20px 18px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
+    .share-link-toast {
+      position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); z-index: 1200;
+      padding: 10px 20px; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 14px; border-radius: 6px;
+      opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; pointer-events: none;
+    }
+    .share-link-toast.show { opacity: 1; visibility: visible; }
+    /* 销售订单详情 */
+    .sod-block-title { font-size: 15px; font-weight: 600; margin: 20px 0 12px; color: var(--text); }
+    .sod-block-title:first-child { margin-top: 0; }
+    .sod-summary-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 20px;
+      font-size: 14px; margin-bottom: 8px;
+    }
+    .sod-summary-grid .meta-item { margin: 0; }
+    .status-tag-done { color: var(--modal-blue); font-weight: 500; }
+    .sod-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    .sod-table th, .sod-table td {
+      padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle;
+    }
+    .sod-table th { background: #fafafa; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+    .sod-table tr:last-child td { border-bottom: none; }
+    .sod-table tbody tr:hover { background: #fafafa; }
+    .sod-table tbody tr.sod-row-exc-hover,
+    .sod-table tbody tr.sod-row-exc-hover:hover { background: #f6fff6; }
+    .sod-table tbody tr.sod-row-exc-hover > td {
+      border-top: 2px solid var(--highlight-green) !important; border-bottom: 2px solid var(--highlight-green) !important;
+    }
+    .sod-table tbody tr.sod-row-exc-hover > td:first-child { border-left: 2px solid var(--highlight-green); }
+    .sod-table tbody tr.sod-row-exc-hover > td:last-child { border-right: 2px solid var(--highlight-green); }
+    .sod-link { color: var(--modal-blue); cursor: pointer; text-decoration: none; }
+    .sod-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">邻药汇仓店管理系统</div>
+      <div class="nav-item">首页</div>
+      <div class="nav-group-title">库内管理</div>
+      <div class="nav-item nav-sub">货位管理</div>
+      <div class="nav-group-title">销售管理</div>
+      <div class="nav-item nav-sub active">销售订单</div>
+    </aside>
+    <div class="main-col">
+      <header class="topbar"><span class="user-name">刘福棋</span></header>
+      <div class="tabs-bar">
+        <div class="tab" data-view="sales" id="tabSales">销售订单详情</div>
+        <div class="tab active" data-view="review" id="tabReview">复核订单</div>
+      </div>
+      <main class="content">
+        <!-- 销售订单详情 -->
+        <div id="viewSales" class="main-view">
+          <div class="card">
+            <div class="order-title-row"><h1>销售订单详情</h1></div>
+            <div class="order-head-zone" id="sodOrderHeadZone">
+              <div class="sod-block-title" style="margin-top:0">订单概要</div>
+              <div class="order-meta-row">
+                <div class="order-meta">
+                  <div class="meta-item"><span class="meta-label">订单状态：</span><span class="meta-value status-tag-done">已复核</span></div>
+                  <div class="meta-item"><span class="meta-label">订单号：</span><span class="meta-value">113136</span></div>
+                  <div class="meta-item"><span class="meta-label">外部订单号：</span><span class="meta-value">3202072780489226439</span></div>
+                  <div class="meta-item"><span class="meta-label">门店名称：</span><span class="meta-value">厦门药栈医药有限公司湖里后埔分店</span></div>
+                  <div class="meta-item"><span class="meta-label">来源：</span><span class="meta-value">美团</span></div>
+                  <div class="meta-item"><span class="meta-label">客户：</span><span class="meta-value">王(**)</span></div>
+                </div>
+                <div class="order-detail-side">
+                  <button type="button" class="btn-exception" id="sodOrderExceptionBtn" data-exc-page="sales" data-exception-scope="order">提报异常</button>
+                  <div class="total-summary">合计：3 件商品</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sod-block-title">外部订单详情</div>
+            <div class="table-wrap">
+              <table class="sod-table">
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>商品信息</th>
+                    <th>单价</th>
+                    <th>数量</th>
+                    <th>退货数量</th>
+                    <th>库存状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>同仁堂 京制牛黄解毒片 0.6g×8片×10瓶</td>
+                    <td>¥28.50</td>
+                    <td>1</td>
+                    <td>0</td>
+                    <td>充足</td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>板蓝根颗粒 10g×20袋</td>
+                    <td>¥15.00</td>
+                    <td>2</td>
+                    <td>0</td>
+                    <td>充足</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sod-block-title">分拣详情</div>
+            <div class="table-wrap">
+              <table class="sod-table">
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>商品信息</th>
+                    <th>批次号/有效期</th>
+                    <th>数量</th>
+                    <th>货位号</th>
+                    <th>检验报告</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="sod-sort-row">
+                    <td>1</td>
+                    <td>同仁堂 京制牛黄解毒片 0.6g×8片×10瓶</td>
+                    <td>240301 / 2026-03-31</td>
+                    <td class="qty-red">1</td>
+                    <td>A-12-08</td>
+                    <td>无</td>
+                    <td>
+                      <button type="button" class="btn-exception small" data-exc-page="sales" data-exception-scope="line" data-line="1" data-product="同仁堂 京制牛黄解毒片 0.6g×8片×10瓶">提报异常</button>
+                    </td>
+                  </tr>
+                  <tr class="sod-sort-row">
+                    <td>2</td>
+                    <td>板蓝根颗粒 10g×20袋</td>
+                    <td>250101 / 2027-12-31</td>
+                    <td class="qty-red">2</td>
+                    <td>B-03-02</td>
+                    <td><a class="sod-link" href="#" onclick="return false;">下载检验报告</a></td>
+                    <td>
+                      <button type="button" class="btn-exception small" data-exc-page="sales" data-exception-scope="line" data-line="2" data-product="板蓝根颗粒 10g×20袋">提报异常</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 复核订单 -->
+        <div id="viewReview" class="main-view active">
+          <div class="card">
+            <div class="order-title-row"><h1>订单详情</h1></div>
+            <div class="order-head-zone" id="orderHeadZone">
+              <div class="order-meta-row">
+                <div class="order-meta">
+                  <div class="meta-item"><span class="meta-label">流水号：</span><span class="meta-value">46</span></div>
+                  <div class="meta-item"><span class="meta-label">来源：</span><span class="meta-value">美团</span></div>
+                  <div class="meta-item"><span class="meta-label">外部订单号：</span><span class="meta-value">3202072780489226439</span></div>
+                  <div class="meta-item"><span class="meta-label">门店名称：</span><span class="meta-value">广州快道信息科技有限公司白云华园东分店</span></div>
+                  <div class="meta-item"><span class="meta-label">客户名称：</span><span class="meta-value">刘(**)</span></div>
+                  <div class="meta-item" style="grid-column:1/-1">
+                    <span class="meta-label">备注信息：</span>
+                    <span class="meta-value danger">收货人隐私号 1576693205_5727，手机号 135****2261</span>
+                  </div>
+                </div>
+                <div class="order-detail-side">
+                  <button type="button" class="btn-exception" id="orderExceptionBtn" data-exc-page="review" data-exception-scope="order">提报异常</button>
+                  <div class="total-summary">合计：3件商品</div>
+                </div>
+              </div>
+            </div>
+            <div class="search-row">
+              <input type="text" class="search-input" placeholder="请扫描溯源码/69码或输入商品名称" autocomplete="off" />
+            </div>
+            <div class="section-title">复核明细</div>
+            <div class="table-wrap">
+              <table class="review-table">
+                <thead>
+                  <tr>
+                    <th>序号</th><th>图片</th><th>销售平台商品</th><th>批次号/效期</th><th>分拣数量</th>
+                    <th>溯源码（已录/数量）</th><th>已录入数量</th><th>状态</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="review-row">
+                    <td>1</td>
+                    <td><div class="thumb">药</div></td>
+                    <td>[方盛]蒲地蓝消炎片0.3g*18片*3板/盒</td>
+                    <td>260101 / 2027-12-31</td>
+                    <td class="qty-red">1</td>
+                    <td>0 / 1</td>
+                    <td>
+                      <div class="stepper">
+                        <button type="button" aria-label="减">−</button>
+                        <input type="text" value="0" readonly /><button type="button" aria-label="加">+</button>
+                      </div>
+                    </td>
+                    <td><div class="status-cell"><span class="status-badge"><span class="status-dot"></span>未完成</span></div></td>
+                    <td>
+                      <button type="button" class="btn-exception small" data-exc-page="review" data-exception-scope="line" data-line="1" data-product="[方盛]蒲地蓝消炎片0.3g*18片*3板/盒">提报异常</button>
+                    </td>
+                  </tr>
+                  <tr class="review-row">
+                    <td>2</td>
+                    <td><div class="thumb">药</div></td>
+                    <td>[森科源]金银花颗粒（无蔗糖）5g*10袋/盒</td>
+                    <td>250815 / 2028-08-14</td>
+                    <td class="qty-red">1</td>
+                    <td>0 / 1</td>
+                    <td>
+                      <div class="stepper">
+                        <button type="button" aria-label="减">−</button>
+                        <input type="text" value="0" readonly /><button type="button" aria-label="加">+</button>
+                      </div>
+                    </td>
+                    <td><div class="status-cell"><span class="status-badge"><span class="status-dot"></span>未完成</span></div></td>
+                    <td>
+                      <button type="button" class="btn-exception small" data-exc-page="review" data-exception-scope="line" data-line="2" data-product="[森科源]金银花颗粒（无蔗糖）5g*10袋/盒">提报异常</button>
+                    </td>
+                  </tr>
+                  <tr class="review-row">
+                    <td>3</td>
+                    <td><div class="thumb">药</div></td>
+                    <td>[苏春]珍珠明目滴眼液8ml/支</td>
+                    <td>241201 / 2026-11-30</td>
+                    <td class="qty-red">1</td>
+                    <td>0 / 1</td>
+                    <td>
+                      <div class="stepper">
+                        <button type="button" aria-label="减">−</button>
+                        <input type="text" value="0" readonly /><button type="button" aria-label="加">+</button>
+                      </div>
+                    </td>
+                    <td><div class="status-cell"><span class="status-badge"><span class="status-dot"></span>未完成</span></div></td>
+                    <td>
+                      <button type="button" class="btn-exception small" data-exc-page="review" data-exception-scope="line" data-line="3" data-product="[苏春]珍珠明目滴眼液8ml/支">提报异常</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="footer-actions">
+              <button type="button" class="btn">取消</button>
+              <button type="button" class="btn">查看错误记录</button>
+              <button type="button" class="btn btn-disabled" disabled>仅复核</button>
+              <button type="button" class="btn btn-primary-green">复核并打印小票</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="exceptionHoverTip" class="exception-hover-tip" role="tooltip"></div>
+
+  <div class="modal-overlay" id="exceptionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span id="modalTitle">异常提报</span>
+        <button type="button" class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-context-hint" id="modalContext"></p>
+        <label class="modal-field-label" for="excType">异常类型：</label>
+        <select id="excType">
+          <option value="meituan_mismatch" selected>美团商品与实物不符</option>
+          <option value="short">缺货/少货</option>
+          <option value="wrong">错品/错批号</option>
+          <option value="damage">破损/质量问题</option>
+          <option value="trace">溯源码异常</option>
+          <option value="duplicate">订单重复</option>
+          <option value="other">其他</option>
+        </select>
+        <label class="modal-field-label" for="excDesc">异常描述：</label>
+        <div class="quick-tags" id="quickTags">
+          <button type="button" class="quick-tag" data-text="顾客反馈不是我要的货">顾客反馈不是我要的货</button>
+          <button type="button" class="quick-tag" data-text="订单重复">订单重复</button>
+          <button type="button" class="quick-tag" data-text="没有随货同行单">没有随货同行单</button>
+        </div>
+        <textarea id="excDesc" placeholder="请简要描述异常场景"></textarea>
+        <label class="modal-field-label">上传附件：</label>
+        <div class="upload-hint-bar">如有必要请上传与顾客聊天截图</div>
+        <input type="file" id="excFiles" multiple accept=".png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.ppt,.pptx" hidden />
+        <div class="upload-zone" id="uploadZone" tabindex="0" role="button">
+          <div class="upload-main">点击上传附件</div>
+          <div class="upload-sub">支持PNG、JPG、Word、Excel、PPT格式上传</div>
+        </div>
+        <div class="upload-file-list" id="uploadFileList"></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-modal-primary" id="modalSubmit">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="share-link-overlay" id="shareLinkOverlay" role="dialog" aria-modal="true" aria-labelledby="shareLinkTip">
+    <div class="share-link-box">
+      <div class="share-link-body">
+        <p class="share-link-tip" id="shareLinkTip">如有需要，请复制以下链接分享到微信技术支持群</p>
+        <div class="share-link-row">
+          <div class="share-link-url" id="shareLinkUrl" tabindex="0"></div>
+          <button type="button" class="btn-copy-link" id="btnCopyShareLink" title="复制链接" aria-label="复制链接">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="20" height="20">
+              <path d="M8 7V5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2M8 7h8a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="share-link-foot">
+        <button type="button" class="btn-modal-primary" id="shareLinkConfirm">确定</button>
+      </div>
+    </div>
+  </div>
+  <div class="share-link-toast" id="copyToast" role="status">已复制到剪贴板</div>
+
+  <script>
+    (function () {
+      /** 发版时修改（如 V2.0 → V2.1），会拼进异常凭证页 URL 的 v 参数，减少浏览器沿用旧缓存 */
+      var APP_STATIC_VERSION = "V2.0";
+      /**
+       * 部署到 GitHub Pages 后填写站点根路径（末尾必须带 /）。
+       * 例：https://你的用户名.github.io/仓库名/
+       * 留空则使用当前页面地址；本地 file:// 打开时复制的链接他人无法访问，请务必填写并推送后再分享。
+       */
+      var GITHUB_PAGES_BASE = "";
+
+      function getCredentialPageBaseUrl() {
+        var g = typeof GITHUB_PAGES_BASE !== "undefined" && GITHUB_PAGES_BASE ? String(GITHUB_PAGES_BASE).trim() : "";
+        if (g) return g.endsWith("/") ? g : g + "/";
+        return window.location.href;
+      }
+
+      function buildCredentialShareUrl() {
+        var u = new URL("异常凭证-H5-demo.html", getCredentialPageBaseUrl());
+        u.searchParams.set("v", APP_STATIC_VERSION);
+        return u;
+      }
+
+      var viewSales = document.getElementById("viewSales");
+      var viewReview = document.getElementById("viewReview");
+      var tabSales = document.getElementById("tabSales");
+      var tabReview = document.getElementById("tabReview");
+      var modal = document.getElementById("exceptionModal");
+      var modalContext = document.getElementById("modalContext");
+      var excType = document.getElementById("excType");
+      var excDesc = document.getElementById("excDesc");
+      var closeBtn = document.getElementById("modalClose");
+      var submitBtn = document.getElementById("modalSubmit");
+      var orderHeadZone = document.getElementById("orderHeadZone");
+      var orderExceptionBtn = document.getElementById("orderExceptionBtn");
+      var sodOrderHeadZone = document.getElementById("sodOrderHeadZone");
+      var sodOrderExceptionBtn = document.getElementById("sodOrderExceptionBtn");
+      var hoverTip = document.getElementById("exceptionHoverTip");
+      var excFiles = document.getElementById("excFiles");
+      var uploadZone = document.getElementById("uploadZone");
+      var uploadFileList = document.getElementById("uploadFileList");
+      var shareLinkOverlay = document.getElementById("shareLinkOverlay");
+      var shareLinkUrlEl = document.getElementById("shareLinkUrl");
+      var btnCopyShareLink = document.getElementById("btnCopyShareLink");
+      var shareLinkConfirm = document.getElementById("shareLinkConfirm");
+      var copyToast = document.getElementById("copyToast");
+      var shareLinkTipEl = document.getElementById("shareLinkTip");
+      var lastExc = { scope: "order", line: "", product: "", page: "review" };
+
+      function switchView(name) {
+        var isSales = name === "sales";
+        viewSales.classList.toggle("active", isSales);
+        viewReview.classList.toggle("active", !isSales);
+        tabSales.classList.toggle("active", isSales);
+        tabReview.classList.toggle("active", !isSales);
+        document.title = isSales ? "销售订单详情 - 邻药汇仓店管理系统" : "复核订单 - 邻药汇仓店管理系统";
+      }
+
+      tabSales.addEventListener("click", function () { switchView("sales"); });
+      tabReview.addEventListener("click", function () { switchView("review"); });
+
+      function hideHoverTip() {
+        hoverTip.classList.remove("show");
+        orderHeadZone.classList.remove("order-exc-hover");
+        sodOrderHeadZone.classList.remove("order-exc-hover");
+        document.querySelectorAll("tr.row-exc-hover").forEach(function (tr) { tr.classList.remove("row-exc-hover"); });
+        document.querySelectorAll("tr.sod-row-exc-hover").forEach(function (tr) { tr.classList.remove("sod-row-exc-hover"); });
+      }
+
+      function positionTip(targetEl, text) {
+        hoverTip.textContent = text;
+        var r = targetEl.getBoundingClientRect();
+        hoverTip.style.left = r.left + r.width / 2 + "px";
+        hoverTip.style.top = r.top + "px";
+        hoverTip.classList.add("show");
+      }
+
+      orderExceptionBtn.addEventListener("mouseenter", function () {
+        orderHeadZone.classList.add("order-exc-hover");
+        positionTip(orderHeadZone, "您将基于此订单提报异常");
+      });
+      orderExceptionBtn.addEventListener("mouseleave", hideHoverTip);
+
+      sodOrderExceptionBtn.addEventListener("mouseenter", function () {
+        sodOrderHeadZone.classList.add("order-exc-hover");
+        positionTip(sodOrderHeadZone, "您将基于此订单提报异常");
+      });
+      sodOrderExceptionBtn.addEventListener("mouseleave", hideHoverTip);
+
+      document.querySelectorAll('[data-exc-page="review"][data-exception-scope="line"]').forEach(function (btn) {
+        btn.addEventListener("mouseenter", function () {
+          var tr = btn.closest("tr.review-row");
+          if (tr) tr.classList.add("row-exc-hover");
+          positionTip(tr || btn, "您将基于此商品批次提报异常");
+        });
+        btn.addEventListener("mouseleave", hideHoverTip);
+      });
+
+      document.querySelectorAll('[data-exc-page="sales"][data-exception-scope="line"]').forEach(function (btn) {
+        btn.addEventListener("mouseenter", function () {
+          var tr = btn.closest("tr.sod-sort-row");
+          if (tr) tr.classList.add("sod-row-exc-hover");
+          positionTip(tr || btn, "您将基于此商品批次提报异常");
+        });
+        btn.addEventListener("mouseleave", hideHoverTip);
+      });
+
+      function renderFileList() {
+        var files = excFiles.files;
+        uploadFileList.textContent = !files || !files.length ? "" : "已选择：" + Array.prototype.map.call(files, function (f) { return f.name; }).join("、");
+      }
+
+      function openModal(scope, line, productName, page) {
+        hideHoverTip();
+        lastExc.scope = scope || "order";
+        lastExc.line = line || "";
+        lastExc.product = productName || "";
+        lastExc.page = page || "review";
+        if (lastExc.page === "sales") {
+          if (lastExc.scope === "order") {
+            modalContext.textContent = "提报范围：销售订单详情（整单）· 订单号 113136 · 外部订单号 3202072780489226439";
+          } else {
+            modalContext.textContent = "提报范围：销售订单详情（分拣明细）· 序号 " + lastExc.line + " · " + (lastExc.product || "");
+          }
+        } else {
+          if (lastExc.scope === "order") {
+            modalContext.textContent = "提报范围：复核台（整单）· 流水号 46 · 外部订单号 3202072780489226439";
+          } else {
+            modalContext.textContent = "提报范围：复核台（复核明细）· 序号 " + lastExc.line + " · " + (lastExc.product || "");
+          }
+        }
+        excType.value = "meituan_mismatch";
+        excDesc.value = "";
+        excFiles.value = "";
+        renderFileList();
+        modal.classList.add("show");
+        excType.focus();
+      }
+
+      function closeModal() { modal.classList.remove("show"); }
+
+      document.querySelectorAll("[data-exception-scope].btn-exception").forEach(function (el) {
+        el.addEventListener("click", function () {
+          var scope = el.getAttribute("data-exception-scope");
+          var line = el.getAttribute("data-line");
+          var product = el.getAttribute("data-product");
+          var page = el.getAttribute("data-exc-page") || "review";
+          openModal(scope, line, product, page);
+        });
+      });
+
+      closeBtn.addEventListener("click", closeModal);
+      modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          if (shareLinkOverlay.classList.contains("show")) closeShareLinkModal();
+          else if (modal.classList.contains("show")) closeModal();
+        }
+      });
+
+      document.querySelectorAll(".quick-tag").forEach(function (tag) {
+        tag.addEventListener("click", function () {
+          var t = tag.getAttribute("data-text") || tag.textContent.trim();
+          if (!t) return;
+          if (!excDesc.value.trim()) excDesc.value = t;
+          else excDesc.value = excDesc.value.trim() + "\n" + t;
+        });
+      });
+
+      uploadZone.addEventListener("click", function () { excFiles.click(); });
+      uploadZone.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); excFiles.click(); }
+      });
+      excFiles.addEventListener("change", renderFileList);
+
+      function openShareLinkModal(url) {
+        shareLinkUrlEl.textContent = url;
+        if (url.indexOf("file:") === 0) {
+          shareLinkTipEl.innerHTML =
+            "如有需要，请复制以下链接分享到微信技术支持群。<br /><span style=\"color:#cf1322;font-size:13px;margin-top:8px;display:inline-block;line-height:1.4\">当前为本地 file 链接，他人无法打开。请在本文档脚本中填写 <code style=\"font-size:12px\">GITHUB_PAGES_BASE</code>（GitHub Pages 地址，末尾带 /）后重新上传仓库再复制链接。</span>";
+        } else {
+          shareLinkTipEl.textContent = "如有需要，请复制以下链接分享到微信技术支持群";
+        }
+        shareLinkOverlay.classList.add("show");
+      }
+      function closeShareLinkModal() { shareLinkOverlay.classList.remove("show"); }
+
+      function showCopyToast() {
+        copyToast.classList.add("show");
+        clearTimeout(showCopyToast._t);
+        showCopyToast._t = setTimeout(function () { copyToast.classList.remove("show"); }, 2000);
+      }
+
+      function copyShareUrl() {
+        var text = shareLinkUrlEl.textContent || "";
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(showCopyToast).catch(function () { fallbackCopy(text); });
+        } else fallbackCopy(text);
+      }
+      function fallbackCopy(text) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); showCopyToast(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+
+      btnCopyShareLink.addEventListener("click", copyShareUrl);
+      shareLinkConfirm.addEventListener("click", closeShareLinkModal);
+      shareLinkOverlay.addEventListener("click", function (e) { if (e.target === shareLinkOverlay) closeShareLinkModal(); });
+
+      submitBtn.addEventListener("click", function () {
+        if (!excType.value) { alert("请先选择异常类型。"); return; }
+        var ticketId = "GD" + String(Date.now()).slice(-10);
+        var shareBase = buildCredentialShareUrl();
+        var sp = shareBase.searchParams;
+        sp.set("ticket", ticketId);
+        sp.set("serial", lastExc.page === "sales" ? "113136" : "46");
+        sp.set("extOrder", "3202072780489226439");
+        sp.set("desc", excDesc.value.trim() || "店员暂未补充文字说明，请结合图片与订单信息处理。");
+        sp.set("excType", excType.value);
+        sp.set("scope", lastExc.scope);
+        if (lastExc.line) sp.set("line", lastExc.line);
+        if (lastExc.product) sp.set("storeProduct", lastExc.product);
+        sp.set("fromPage", lastExc.page === "sales" ? "sales-order-detail" : "review");
+        closeModal();
+        openShareLinkModal(shareBase.toString());
+      });
+
+      document.querySelectorAll(".stepper").forEach(function (stepper) {
+        var input = stepper.querySelector("input");
+        var btns = stepper.querySelectorAll("button");
+        btns[0].addEventListener("click", function () {
+          var n = parseInt(input.value, 10) || 0;
+          input.value = Math.max(0, n - 1);
+        });
+        btns[1].addEventListener("click", function () {
+          var n = parseInt(input.value, 10) || 0;
+          input.value = n + 1;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
