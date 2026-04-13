@@ -7,9 +7,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <!-- 版本由 release-config.js 写入；?v= 由根目录 node sync-release.mjs 与 release-config 同步 -->
+  <!-- 版本由 release-config.js 提供；页面用 fetch(cache:no-store) 拉取，地址栏 URL 无需带版本参数 -->
   <meta name="app-static-version" content="" />
-  <script src="release-config.js?v=V3.2"></script>
   <title>邻药汇仓店管理系统</title>
   <style>
     :root {
@@ -564,11 +563,34 @@
 
   <script>
     (function () {
-      /** 与 release-config.js 一致；会拼进异常凭证页 URL 的 v 参数，减少浏览器沿用旧缓存 */
+      var FALLBACK_VER = "V3.2";
+      function loadReleaseConfigAndRun(run) {
+        fetch("release-config.js", { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("config");
+            return r.text();
+          })
+          .then(function (txt) {
+            try {
+              (0, eval)(txt);
+            } catch (e1) {
+              window.__DEMO_APP_VERSION__ = FALLBACK_VER;
+            }
+            run();
+          })
+          .catch(function () {
+            if (typeof window.__DEMO_APP_VERSION__ === "undefined" || !window.__DEMO_APP_VERSION__) {
+              window.__DEMO_APP_VERSION__ = FALLBACK_VER;
+            }
+            run();
+          });
+      }
+      function runApp() {
+      /** 与 release-config.js 一致（由上方 fetch 注入） */
       var APP_VER =
         typeof window.__DEMO_APP_VERSION__ !== "undefined" && window.__DEMO_APP_VERSION__
           ? window.__DEMO_APP_VERSION__
-          : "V3.2";
+          : FALLBACK_VER;
       var metaVer = document.querySelector('meta[name="app-static-version"]');
       if (metaVer) metaVer.setAttribute("content", APP_VER);
       var appVerFoot = document.getElementById("appVersionFooter");
@@ -587,9 +609,7 @@
       }
 
       function buildCredentialShareUrl() {
-        var u = new URL("异常凭证-H5-demo.html", getCredentialPageBaseUrl());
-        u.searchParams.set("v", APP_VER);
-        return u;
+        return new URL("异常凭证-H5-demo.html", getCredentialPageBaseUrl());
       }
 
       var viewSales = document.getElementById("viewSales");
@@ -838,6 +858,8 @@
           input.value = n + 1;
         });
       });
+    }
+    loadReleaseConfigAndRun(runApp);
     })();
   </script>
 </body>

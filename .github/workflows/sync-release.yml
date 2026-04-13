@@ -1,4 +1,4 @@
-# 推送修改了 release-config.js 时，自动运行 sync-release.mjs 并提交 HTML 更新（避免忘记同步 ?v= 导致缓存旧脚本）
+# 推送修改了 release-config.js 时，同步各 HTML 内联 FALLBACK_VER（fetch 失败时的回退版本号）
 name: Sync release version to HTML
 
 on:
@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: "20"
 
-      - name: 同步 HTML 中的 ?v= 与内联回退版本
+      - name: 同步 HTML 内联 FALLBACK_VER
         run: node sync-release.mjs
 
       - name: 若有变更则提交并推送
@@ -39,5 +39,5 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: 同步 release-config 版本到 HTML（缓存参数）"
+          git commit -m "chore: 同步 HTML 内联 FALLBACK_VER 与 release-config"
           git push

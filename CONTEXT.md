@@ -11,20 +11,20 @@
 
 | 文件 | 说明 |
 |------|------|
-| `release-config.js` | **版本号唯一真源**：`window.__DEMO_APP_VERSION__`。发版改此处后运行 `node sync-release.mjs`。 |
-| `sync-release.mjs` | 按 `release-config.js` 同步各 HTML 中 `release-config.js?v=`，减轻浏览器缓存旧脚本。 |
+| `release-config.js` | **版本号唯一真源**：`window.__DEMO_APP_VERSION__`。发版改此处；可选跑 `sync-release.mjs` 同步 HTML 内 **FALLBACK_VER**。 |
+| `sync-release.mjs` | 将版本写入各 HTML 的 `FALLBACK_VER`（`fetch` 失败、`file://` 打开时使用）。 |
 | `package.json` | `npm run sync-release` 等同于 `node sync-release.mjs`。 |
 | `.github/workflows/sync-release.yml` | 推送修改 `release-config.js` 时自动跑同步并提交 HTML（亦可 Actions 里手动 Run workflow）。 |
-| `异常凭证-H5-demo.html` | 异常凭证页；`<head>` 中加载 `release-config.js`，自动写入 meta 与页脚版本。 |
+| `异常凭证-H5-demo.html` | 异常凭证页；`fetch(release-config.js, { cache: 'no-store' })` 取版本，写入 meta 与页脚。 |
 | `cursor/rules/演示发版版本号.mdc` | 约定：助手发版时只维护 `release-config.js`。 |
 | `CONTEXT.md` | 本说明。 |
 
-> 若你本地还有 **`index.html`**（主入口：双 Tab 切换销售订单详情 / 复核订单、提报异常、分享链接），请与上述文件放在同一目录；其中分享链接的 `v=` 参数应读取 `window.__DEMO_APP_VERSION__`（先加载 `release-config.js`），勿在 HTML 里硬编码版本。
+> **`index.html`** 与异常凭证页：**地址栏 URL 无需带版本参数**。页面用 **`fetch('release-config.js', { cache: 'no-store' })`** 拉取配置（刷新即向服务器重新要最新 `release-config.js`），版本号展示与分享链接均基于该结果。分享出去的 H5 链接里 **不再附加 `v=`**（业务 query 如 `ticket` 等仍保留）。
 
 ## 版本与缓存
 
-- 分享 URL 中带 `v=<版本>`，便于浏览器区分缓存。
-- **发版（最简单）**：① 只改 `release-config.js` 里的 `window.__DEMO_APP_VERSION__`；② **任选其一**：本地执行 **`npm run sync-release`**（或 `node sync-release.mjs`）再推送；或 **直接推送** `release-config.js`，由 **GitHub Actions**（`Sync release version to HTML`）自动改 HTML 并再推一个提交。③ 若全在本地完成，照常 `git add` 后一次推送即可。
+- **浏览器侧**：`cache: 'no-store'` 尽量避免沿用本地旧 `release-config.js`；**入口 HTML** 仍可能被 CDN/浏览器按站点策略缓存，若极端情况下整页过旧，需依赖托管方缓存策略或强制刷新。
+- **发版**：① 改 `release-config.js`；②（建议）**`npm run sync-release`** 或推送后由 **GitHub Actions** 同步 HTML 内 **FALLBACK_VER**，再 **`git add` / push**。
 
 ## GitHub Pages / 可复制链接
 

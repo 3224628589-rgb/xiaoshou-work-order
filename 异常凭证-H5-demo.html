@@ -9,7 +9,6 @@
   <meta http-equiv="Expires" content="0" />
   <meta name="app-static-version" content="" />
   <title>异常凭证</title>
-  <script src="release-config.js?v=V3.2"></script>
   <style>
     :root {
       --bg: #fff;
@@ -242,16 +241,39 @@
     <div class="img-grid-6" id="storeImages"></div>
 
     <p class="footer-note" id="footerNote">
-      本页为销售工单异常业务信息快照。链接 <code>v</code> 参数用于发版刷新缓存；正式环境由服务端下发完整字段与图片 URL。
+      本页为销售工单异常业务信息快照。刷新页面会通过 <code>release-config.js</code> 拉取当前演示版本；正式环境由服务端下发完整字段与图片 URL。
     </p>
     <p class="page-version-line" id="pageVersionLine" aria-label="演示版本号"></p>
   </div>
   <script>
     (function () {
+      var FALLBACK_VER = "V3.2";
+      function loadReleaseConfigAndRun(run) {
+        fetch("release-config.js", { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("config");
+            return r.text();
+          })
+          .then(function (txt) {
+            try {
+              (0, eval)(txt);
+            } catch (e1) {
+              window.__DEMO_APP_VERSION__ = FALLBACK_VER;
+            }
+            run();
+          })
+          .catch(function () {
+            if (typeof window.__DEMO_APP_VERSION__ === "undefined" || !window.__DEMO_APP_VERSION__) {
+              window.__DEMO_APP_VERSION__ = FALLBACK_VER;
+            }
+            run();
+          });
+      }
+      function runApp() {
       var APP_VER =
         typeof window.__DEMO_APP_VERSION__ !== "undefined" && window.__DEMO_APP_VERSION__
           ? window.__DEMO_APP_VERSION__
-          : "V3.2";
+          : FALLBACK_VER;
       var metaVer = document.querySelector('meta[name="app-static-version"]');
       if (metaVer) metaVer.setAttribute("content", APP_VER);
       var verLine = document.getElementById("pageVersionLine");
@@ -261,7 +283,7 @@
         foot.innerHTML =
           "本页为销售工单异常业务信息快照（<strong>" +
           APP_VER +
-          "</strong>）。链接 <code>v</code> 参数用于发版刷新缓存；正式环境由服务端下发完整字段与图片 URL。";
+          "</strong>）。刷新页面可获取最新演示版本；正式环境由服务端下发完整字段与图片 URL。";
       }
 
       function getParam(key, def) {
@@ -364,6 +386,8 @@
 
       fillImageGrid("listedImages", "listv3", 6);
       fillImageGrid("storeImages", "storev3", 6);
+    }
+    loadReleaseConfigAndRun(runApp);
     })();
   </script>
 </body>

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * 根据 release-config.js 里的版本号，同步各 HTML 中 <script src="release-config.js?v=...">
- * 避免浏览器长期缓存旧脚本。发版：只改 release-config.js 后执行： node sync-release.mjs
+ * 将 release-config.js 中的版本号同步到各 HTML 内联的 FALLBACK_VER（fetch 失败或 file:// 时使用）。
+ * 正常线上访问不依赖 URL 参数；发版改 release-config.js 后可选执行： npm run sync-release
  */
 import fs from "fs";
 import path from "path";
@@ -24,16 +24,12 @@ for (const name of targets) {
   const p = path.join(root, name);
   if (!fs.existsSync(p)) continue;
   let s = fs.readFileSync(p, "utf8");
-  let next = s.replace(/release-config\.js\?v=[^"'>\s]+/g, `release-config.js?v=${ver}`);
-  next = next.replace(
-    /(\n\s*\?\s*window\.__DEMO_APP_VERSION__\s*\n\s*:\s*")[^"]*(";)/g,
-    `$1${ver}$2`
-  );
+  const next = s.replace(/var FALLBACK_VER = "[^"]*";/g, `var FALLBACK_VER = "${ver}";`);
   if (s === next) {
-    console.log(name + "（已是 " + ver + "，跳过）");
+    console.log(name + "（FALLBACK_VER 已是 " + ver + "，跳过）");
   } else {
     fs.writeFileSync(p, next, "utf8");
-    console.log(name + " → ?v=" + ver + " + 内联回退版本");
+    console.log(name + " → FALLBACK_VER=" + ver);
   }
 }
 console.log("完成。请 git add 后推送。");
