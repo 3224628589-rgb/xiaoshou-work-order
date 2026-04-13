@@ -551,7 +551,7 @@
       var APP_VER =
         typeof window.__DEMO_APP_VERSION__ !== "undefined" && window.__DEMO_APP_VERSION__
           ? window.__DEMO_APP_VERSION__
-          : "V3.0";
+          : "V3.1";
       var metaVer = document.querySelector('meta[name="app-static-version"]');
       if (metaVer) metaVer.setAttribute("content", APP_VER);
       /**
@@ -597,7 +597,9 @@
       var shareLinkConfirm = document.getElementById("shareLinkConfirm");
       var copyToast = document.getElementById("copyToast");
       var shareLinkTipEl = document.getElementById("shareLinkTip");
-      var lastExc = { scope: "order", line: "", product: "", page: "review" };
+      var lastExc = { scope: "order", line: "", product: "", page: "review", listingProduct: "" };
+      /** 复制分享时的完整文案（含引导语 + URL），与展示框内仅 URL 区分 */
+      var lastShareCopyFull = "";
 
       function switchView(name) {
         var isSales = name === "sales";
@@ -662,12 +664,33 @@
         uploadFileList.textContent = !files || !files.length ? "" : "已选择：" + Array.prototype.map.call(files, function (f) { return f.name; }).join("、");
       }
 
+      function resolveListingProductLabel() {
+        if (lastExc.scope === "line" && lastExc.product) return String(lastExc.product).trim();
+        if (lastExc.scope === "order") {
+          if (lastExc.page === "review") {
+            var trR = document.querySelector("#viewReview tr.review-row");
+            if (trR) {
+              var cellsR = trR.querySelectorAll("td");
+              if (cellsR.length > 2) return (cellsR[2].textContent || "").trim();
+            }
+          } else {
+            var trS = document.querySelector("#viewSales tr.sod-sort-row");
+            if (trS) {
+              var cellsS = trS.querySelectorAll("td");
+              if (cellsS.length > 1) return (cellsS[1].textContent || "").trim();
+            }
+          }
+        }
+        return "本单商品";
+      }
+
       function openModal(scope, line, productName, page) {
         hideHoverTip();
         lastExc.scope = scope || "order";
         lastExc.line = line || "";
         lastExc.product = productName || "";
         lastExc.page = page || "review";
+        lastExc.listingProduct = resolveListingProductLabel();
         if (lastExc.page === "sales") {
           if (lastExc.scope === "order") {
             modalContext.textContent = "提报范围：销售订单详情（整单）· 订单号 113136 · 外部订单号 3202072780489226439";
@@ -727,6 +750,8 @@
 
       function openShareLinkModal(url) {
         shareLinkUrlEl.textContent = url;
+        var label = (lastExc.listingProduct || "").trim() || "本单商品";
+        lastShareCopyFull = label + "的实物和挂网资料不符，请点击下方链接查看详情：" + url;
         if (url.indexOf("file:") === 0) {
           shareLinkTipEl.innerHTML =
             "如有需要，请复制以下链接分享到微信技术支持群。<br /><span style=\"color:#cf1322;font-size:13px;margin-top:8px;display:inline-block;line-height:1.4\">当前为本地 file 链接，他人无法打开。请在本文档脚本中填写 <code style=\"font-size:12px\">GITHUB_PAGES_BASE</code>（GitHub Pages 地址，末尾带 /）后重新上传仓库再复制链接。</span>";
@@ -744,7 +769,7 @@
       }
 
       function copyShareUrl() {
-        var text = shareLinkUrlEl.textContent || "";
+        var text = (lastShareCopyFull || shareLinkUrlEl.textContent || "").trim();
         if (!text) return;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text).then(showCopyToast).catch(function () { fallbackCopy(text); });
