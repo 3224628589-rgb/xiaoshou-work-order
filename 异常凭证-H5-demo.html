@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="format-detection" content="telephone=no" />
-  <meta name="app-static-version" content="V2.0" />
+  <meta name="app-static-version" content="" />
   <title>异常凭证</title>
+  <script src="release-config.js"></script>
   <style>
     :root {
       --bg: #fff;
@@ -33,156 +34,321 @@
       padding: 16px 16px 32px;
       padding-bottom: calc(32px + env(safe-area-inset-bottom));
     }
-    .headline { font-size: 22px; font-weight: 700; line-height: 1.35; margin-bottom: 14px; letter-spacing: -0.02em; }
-    .order-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 10px; }
-    .tag-serial {
-      display: inline-block; padding: 2px 10px; font-size: 13px; font-weight: 600;
-      color: var(--yellow-text); background: var(--yellow-bg); border: 1px solid var(--yellow-border); border-radius: 4px;
+    .headline {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 18px;
+      letter-spacing: -0.02em;
     }
-    .order-no { font-size: 14px; font-weight: 500; word-break: break-all; }
-    .status-done { font-size: 14px; color: var(--blue); font-weight: 500; }
-    .ticket-row { font-size: 13px; color: var(--sub); margin-bottom: 12px; }
-    .ticket-row strong { color: var(--text); font-weight: 600; }
-    .desc-box { background: var(--muted); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: #333; line-height: 1.55; margin-bottom: 20px; }
-    .desc-box .label { color: var(--sub); font-size: 13px; margin-bottom: 6px; }
-    .compare-title { font-size: 13px; color: var(--sub); margin-bottom: 10px; font-weight: 600; }
-    .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-    .compare-card { background: var(--muted); border-radius: 8px; padding: 12px 10px; font-size: 12px; line-height: 1.55; color: #333; }
-    .compare-card .source { font-size: 11px; color: #999; margin-bottom: 8px; font-weight: 600; }
-    .compare-card .row { margin-bottom: 4px; word-break: break-all; }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 20px 0 10px;
+      color: var(--text);
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .section-title:first-of-type { margin-top: 0; }
+    .info-card {
+      background: var(--muted);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #333;
+    }
+    .kv-row { display: flex; gap: 8px; margin-bottom: 8px; word-break: break-all; }
+    .kv-row:last-child { margin-bottom: 0; }
+    .kv-label { color: var(--sub); flex-shrink: 0; min-width: 5.5em; }
+    .kv-value { flex: 1; }
+    .triple-wrap {
+      margin: 0;
+    }
+    .triple-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .compare-card {
+      background: var(--muted);
+      border-radius: 8px;
+      padding: 12px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #333;
+    }
+    .compare-card .source {
+      font-size: 12px;
+      color: #999;
+      font-weight: 600;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .compare-card .row { margin-bottom: 5px; word-break: break-all; }
     .rx-tag {
-      display: inline-block; margin-top: 8px; padding: 2px 8px; font-size: 11px; color: #cf1322;
-      background: #fff1f0; border: 1px solid #ffa39e; border-radius: 2px;
+      display: inline-block;
+      margin-top: 6px;
+      padding: 1px 6px;
+      font-size: 10px;
+      color: #cf1322;
+      background: #fff1f0;
+      border: 1px solid #ffa39e;
+      border-radius: 2px;
     }
-    .section-title { font-size: 15px; font-weight: 600; margin: 22px 0 12px; color: var(--text); }
-    .img-mosaic {
-      display: grid; grid-template-columns: 1.15fr 1fr; grid-template-rows: minmax(86px, 1fr) minmax(86px, 1fr);
-      gap: 8px; margin-bottom: 8px;
+    .img-grid-6 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
-    .img-mosaic .cell-main { grid-row: 1 / -1; grid-column: 1; min-height: 180px; border-radius: 8px; overflow: hidden; background: #e8e8e8; }
-    .img-mosaic .cell { border-radius: 8px; overflow: hidden; background: #e8e8e8; min-height: 86px; }
-    .img-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #e8e8e8;
+    }
+    .img-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .img-ph {
-      width: 100%; height: 100%; min-height: 86px; display: flex; align-items: center; justify-content: center;
-      font-size: 12px; color: #8c8c8c; text-align: center; padding: 8px; background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+      width: 100%;
+      height: 100%;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #8c8c8c;
+      text-align: center;
+      padding: 6px;
+      background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
     }
-    .cell-main .img-ph { min-height: 180px; }
     .footer-note {
-      margin-top: 28px; padding-top: 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #999; text-align: center; line-height: 1.6;
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      line-height: 1.6;
     }
+    .sub-block-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sub);
+      margin: 12px 0 8px;
+    }
+    .sub-block-title:first-child { margin-top: 0; }
   </style>
 </head>
 <body>
   <div class="page">
-    <h1 class="headline" id="headline">我发现美团商品与实物不一致！</h1>
-    <div class="order-bar">
-      <span class="tag-serial" id="tagSerial">75#</span>
-      <span class="order-no" id="extOrderNo">3201868612401177</span>
-      <span class="status-done" id="ticketStatus">已完成</span>
+    <h1 class="headline" id="headline">我发现实物与挂网销售商品不一致</h1>
+
+    <h2 class="section-title">工单提报信息</h2>
+    <div class="info-card" id="ticketSubmitBlock">
+      <div class="kv-row"><span class="kv-label">异常类型</span><span class="kv-value" id="excTypeLabel">美团商品与实物不符</span></div>
+      <div class="kv-row"><span class="kv-label">异常描述</span><span class="kv-value" id="excDescText">—</span></div>
+      <div class="kv-row"><span class="kv-label">附件</span><span class="kv-value" id="attachmentInfo">无</span></div>
+      <div class="kv-row"><span class="kv-label">提报人</span><span class="kv-value" id="reporterName">刘福棋</span></div>
+      <div class="kv-row"><span class="kv-label">工单编号</span><span class="kv-value" id="ticketNo">—</span></div>
     </div>
-    <div class="ticket-row">工单编号：<strong id="ticketNo">GD1222312</strong></div>
-    <div class="desc-box">
-      <div class="label">异常描述</div>
-      <div id="excDescText">美团的规格和实物的规格不一致，美团图片是喷雾型，实物不是，顾客表示需要退货</div>
+
+    <h2 class="section-title">原始订单数据</h2>
+    <div class="info-card">
+      <div class="kv-row"><span class="kv-label">外部订单号</span><span class="kv-value" id="extOrderNo">—</span></div>
+      <div class="kv-row"><span class="kv-label">流水号</span><span class="kv-value" id="serialNo">—</span></div>
+      <div class="kv-row"><span class="kv-label">订单状态</span><span class="kv-value" id="orderStatus">已复核</span></div>
+      <div class="kv-row"><span class="kv-label">来源平台</span><span class="kv-value" id="sourcePlatform">美团</span></div>
     </div>
-    <div class="compare-title">商品信息对比</div>
-    <div class="compare-row">
-      <div class="compare-card">
-        <div class="source">美团挂网商品信息</div>
-        <div class="row" id="mtBrand">[三九] 999</div>
-        <div class="row" id="mtName">胃泰颗粒 20g×9袋</div>
-        <div class="row" id="mtBarcode">条码：6965465135548</div>
-        <div class="row" id="mtApproval">批准文号：国药准字H54151545</div>
-        <div class="row" id="mtFactory">生产企业：广东华润顺峰药业有限公司</div>
-        <span class="rx-tag" id="mtRx">处方药</span>
+
+    <h2 class="section-title">商品资料对比</h2>
+    <p style="font-size:12px;color:#999;margin:-4px 0 10px">自上而下：仓店商品资料 → 掌店易商品资料 → 挂网商品资料</p>
+    <div class="triple-wrap">
+      <div class="triple-row">
+        <div class="compare-card">
+          <div class="source">仓店商品资料</div>
+          <div class="row" id="whId">商品ID：10086001</div>
+          <div class="row" id="whName">商品名称：胃泰颗粒</div>
+          <div class="row" id="whSpec">商品规格：20g×9袋</div>
+          <div class="row" id="whBarcode">商品条码：6965465135548</div>
+          <div class="row" id="whApproval">批准文号：国药准字H54151545</div>
+          <div class="row" id="whFactory">生产厂家：广东华润顺峰药业有限公司</div>
+          <span class="rx-tag" id="whRx">处方分类：处方药</span>
+        </div>
+        <div class="compare-card">
+          <div class="source">掌店易商品资料</div>
+          <div class="row" id="zdyCode">商品编码：ZD-Y-88921</div>
+          <div class="row" id="zdyName">商品名称：胃泰颗粒</div>
+          <div class="row" id="zdySpec">商品规格：20g×9袋</div>
+          <div class="row" id="zdyBarcode">商品条码：6965465135548</div>
+          <div class="row" id="zdyApproval">批准文号：国药准字H54151545</div>
+          <div class="row" id="zdyFactory">生产厂家：广东华润顺峰药业有限公司</div>
+          <span class="rx-tag" id="zdyRx">处方分类：处方药</span>
+        </div>
+        <div class="compare-card">
+          <div class="source">挂网商品资料</div>
+          <div class="row" id="gwCode">店内码：MT-55201</div>
+          <div class="row" id="gwName">商品名称：胃泰颗粒</div>
+          <div class="row" id="gwSpec">商品规格：20g×9袋（喷雾型展示）</div>
+          <div class="row" id="gwBarcode">商品条码：6965465135548</div>
+          <div class="row" id="gwApproval">批准文号：国药准字H54151545</div>
+          <div class="row" id="gwFactory">生产厂家：广东华润顺峰药业有限公司</div>
+          <span class="rx-tag" id="gwRx">处方分类：处方药</span>
+        </div>
       </div>
-      <div class="compare-card">
-        <div class="source">仓店实物/系统信息</div>
-        <div class="row" id="stBrand">[三九] 999</div>
-        <div class="row" id="stName">胃泰颗粒 20g×6袋（仓店批次）</div>
-        <div class="row" id="stBarcode">内部码：69658…</div>
-        <div class="row" id="stApproval">批准文号：国药准字H54151545</div>
-        <div class="row" id="stFactory">生产企业：广东华润顺峰药业有限公司</div>
-        <span class="rx-tag" id="stRx">处方药</span>
-      </div>
     </div>
-    <div class="section-title">美团挂网图片</div>
-    <div class="img-mosaic" id="mtImages"></div>
-    <div class="section-title">仓店实物图片</div>
-    <div class="img-mosaic" id="stImages"></div>
-    <p class="footer-note">
-      本页由复核台异常工单自动生成，用于微信群内同步凭证。<br />
-      链接中的 <code>v</code> 参数用于发版区分缓存；正式环境由服务端签发短链与鉴权。
+
+    <h2 class="section-title">价格信息</h2>
+    <div class="info-card">
+      <div class="kv-row"><span class="kv-label">批次采购单价</span><span class="kv-value" id="pricePurchase">¥12.80</span></div>
+      <div class="kv-row"><span class="kv-label">在库平均单价</span><span class="kv-value" id="priceAvg">¥13.05</span></div>
+      <div class="kv-row"><span class="kv-label">美团零售单价</span><span class="kv-value" id="priceMt">¥28.50</span></div>
+    </div>
+
+    <h2 class="section-title">批次分拣与入库溯源</h2>
+    <div class="info-card">
+      <div class="sub-block-title">批次入库溯源</div>
+      <div class="kv-row"><span class="kv-label">采购单号</span><span class="kv-value" id="tracePo">CG202504010089</span></div>
+      <div class="kv-row"><span class="kv-label">入库单号</span><span class="kv-value" id="traceInbound">RK202504020112</span></div>
+      <div class="kv-row"><span class="kv-label">供应商名称</span><span class="kv-value" id="traceSupplier">华润医药商业集团</span></div>
+      <div class="kv-row"><span class="kv-label">平台单号</span><span class="kv-value" id="tracePlatform">PF-MEI-2025040315</span></div>
+      <div class="sub-block-title">批次分拣详情</div>
+      <div class="kv-row"><span class="kv-label">分拣数量</span><span class="kv-value" id="sortQty">1</span></div>
+      <div class="kv-row"><span class="kv-label">特殊效期标签</span><span class="kv-value" id="sortExpLabel">无</span></div>
+      <div class="kv-row"><span class="kv-label">分拣货位</span><span class="kv-value" id="sortBin">A-12-08</span></div>
+      <div class="kv-row"><span class="kv-label">生产批号</span><span class="kv-value" id="sortBatchNo">240301</span></div>
+      <div class="kv-row"><span class="kv-label">生产日期</span><span class="kv-value" id="sortMfg">2024-03-01</span></div>
+      <div class="kv-row"><span class="kv-label">有效期至</span><span class="kv-value" id="sortExp">2026-03-31</span></div>
+    </div>
+
+    <h2 class="section-title">挂网销售图片</h2>
+    <p style="font-size:12px;color:#999;margin:-6px 0 8px">最多六张</p>
+    <div class="img-grid-6" id="listedImages"></div>
+
+    <h2 class="section-title">仓店实物图片</h2>
+    <p style="font-size:12px;color:#999;margin:-6px 0 8px">最多六张（演示数据；正式环境可对接 wsms.t_goods_base_img 等）</p>
+    <div class="img-grid-6" id="storeImages"></div>
+
+    <p class="footer-note" id="footerNote">
+      本页为销售工单异常业务信息快照。链接 <code>v</code> 参数用于发版刷新缓存；正式环境由服务端下发完整字段与图片 URL。
     </p>
   </div>
   <script>
     (function () {
+      var APP_VER =
+        typeof window.__DEMO_APP_VERSION__ !== "undefined" && window.__DEMO_APP_VERSION__
+          ? window.__DEMO_APP_VERSION__
+          : "V3.0";
+      var metaVer = document.querySelector('meta[name="app-static-version"]');
+      if (metaVer) metaVer.setAttribute("content", APP_VER);
+      var foot = document.getElementById("footerNote");
+      if (foot) {
+        foot.innerHTML =
+          "本页为销售工单异常业务信息快照（<strong>" +
+          APP_VER +
+          "</strong>）。链接 <code>v</code> 参数用于发版刷新缓存；正式环境由服务端下发完整字段与图片 URL。";
+      }
+
       function getParam(key, def) {
         var q = new URLSearchParams(window.location.search);
         var v = q.get(key);
         return v !== null && v !== "" ? v : def;
       }
-      var ticket = getParam("ticket", "GD1222312");
-      var serial = getParam("serial", "75");
-      var extOrder = getParam("extOrder", "3201868612401177");
-      var desc = getParam("desc", "美团的规格和实物的规格不一致，美团图片是喷雾型，实物不是，顾客表示需要退货");
+
       var excType = getParam("excType", "meituan_mismatch");
-      var scope = getParam("scope", "line");
-      var line = getParam("line", "");
-      var platformProduct = getParam("platformProduct", "");
-      var storeProduct = getParam("storeProduct", "");
-      var headlines = {
-        meituan_mismatch: "我发现美团商品与实物不一致！",
-        short: "分拣复核异常：缺货/少货说明",
-        wrong: "分拣复核异常：错品/错批号说明",
-        damage: "分拣复核异常：破损/质量问题说明",
-        trace: "分拣复核异常：溯源码异常说明",
-        duplicate: "分拣复核异常：订单重复说明",
-        other: "分拣复核异常说明",
+      var excTypeLabels = {
+        meituan_mismatch: "美团商品与实物不符",
+        short: "缺货/少货",
+        wrong: "错品/错批号",
+        damage: "破损/质量问题",
+        trace: "溯源码异常",
+        duplicate: "订单重复",
+        other: "其他",
       };
-      document.getElementById("headline").textContent = headlines[excType] || headlines.other;
-      document.getElementById("tagSerial").textContent = serial + "#";
-      document.getElementById("extOrderNo").textContent = extOrder;
-      document.getElementById("ticketNo").textContent = ticket;
+
+      var ticket = getParam("ticket", "GD1222312");
+      var desc = getParam("desc", "美团的规格和实物的规格不一致，美团图片是喷雾型，实物不是，顾客表示需要退货");
+      var serial = getParam("serial", "46");
+      var extOrder = getParam("extOrder", "3202072780489226439");
+      var orderStatus = getParam("orderStatus", "已复核");
+      var sourcePlatform = getParam("sourcePlatform", "美团");
+      var reporter = getParam("reporter", "刘福棋");
+      var attachments = getParam("attachments", "");
+      var attachCount = getParam("attachCount", "");
+      var storeProduct = getParam("storeProduct", "");
+
+      document.getElementById("headline").textContent = getParam(
+        "headline",
+        "我发现实物与挂网销售商品不一致"
+      );
+
+      document.getElementById("excTypeLabel").textContent =
+        getParam("excTypeLabel", "") || excTypeLabels[excType] || excTypeLabels.other;
       document.getElementById("excDescText").textContent = desc;
-      if (platformProduct) document.getElementById("mtName").textContent = platformProduct;
-      if (storeProduct) document.getElementById("stName").textContent = storeProduct;
-      else if (platformProduct) document.getElementById("stName").textContent = platformProduct + "（仓店实物与挂网不一致）";
-      if (scope === "line" && line) {
-        document.getElementById("stBarcode").textContent =
-          "复核明细序号：" + line + " · " + document.getElementById("stBarcode").textContent;
+      document.getElementById("reporterName").textContent = reporter;
+      document.getElementById("ticketNo").textContent = ticket;
+
+      if (attachments) {
+        document.getElementById("attachmentInfo").textContent = attachments;
+      } else if (attachCount !== "" && attachCount !== null) {
+        document.getElementById("attachmentInfo").textContent = "已上传 " + attachCount + " 个文件（演示）";
       }
-      function buildMosaic(containerId, seedPrefix) {
+
+      document.getElementById("extOrderNo").textContent = extOrder;
+      document.getElementById("serialNo").textContent = serial;
+      document.getElementById("orderStatus").textContent = orderStatus;
+      document.getElementById("sourcePlatform").textContent = sourcePlatform;
+
+      if (storeProduct) {
+        document.getElementById("whName").textContent = "商品名称：" + storeProduct;
+        document.getElementById("zdyName").textContent = "商品名称：" + storeProduct;
+        document.getElementById("gwName").textContent = "商品名称：" + storeProduct + "（挂网展示差异示例）";
+      }
+
+      var line = getParam("line", "");
+      if (line) {
+        document.getElementById("sortQty").textContent = getParam("sortQty", "1");
+        document.getElementById("sortBin").textContent = getParam("sortBin", "A-12-08");
+        document.getElementById("tracePlatform").textContent =
+          getParam("tracePlatform", "PF-MEI-2025040315") + " · 明细序号 " + line;
+      }
+
+      function setIfParam(elId, paramKey, suffix) {
+        var v = getParam(paramKey, "");
+        if (v) document.getElementById(elId).textContent = (suffix || "") + v;
+      }
+      setIfParam("pricePurchase", "pricePurchase", "¥");
+      setIfParam("priceAvg", "priceAvg", "¥");
+      setIfParam("priceMt", "priceMt", "¥");
+      setIfParam("tracePo", "tracePo", "");
+      setIfParam("traceInbound", "traceInbound", "");
+      setIfParam("traceSupplier", "traceSupplier", "");
+      setIfParam("sortBatchNo", "sortBatchNo", "");
+      setIfParam("sortMfg", "sortMfg", "");
+      setIfParam("sortExp", "sortExp", "");
+
+      function fillImageGrid(containerId, seedPrefix, count) {
         var el = document.getElementById(containerId);
-        var urls = [
-          "https://picsum.photos/seed/" + seedPrefix + "m0/600/800",
-          "https://picsum.photos/seed/" + seedPrefix + "m1/400/400",
-          "https://picsum.photos/seed/" + seedPrefix + "m2/400/400",
-          "https://picsum.photos/seed/" + seedPrefix + "m3/400/400",
-          "https://picsum.photos/seed/" + seedPrefix + "m4/400/400",
-        ];
-        function cell(main, url, phText) {
-          var d = document.createElement("div");
-          d.className = main ? "cell-main" : "cell";
-          var img = document.createElement("img");
-          img.alt = "凭证图";
-          img.loading = "lazy";
-          img.src = url;
-          img.onerror = function () {
-            d.innerHTML = "";
-            var ph = document.createElement("div");
-            ph.className = "img-ph";
-            ph.textContent = phText;
-            d.appendChild(ph);
-          };
-          d.appendChild(img);
-          return d;
+        el.innerHTML = "";
+        for (var i = 0; i < count; i++) {
+          (function (idx) {
+            var cell = document.createElement("div");
+            cell.className = "img-cell";
+            var img = document.createElement("img");
+            img.alt = "图" + (idx + 1);
+            img.loading = "lazy";
+            img.src = "https://picsum.photos/seed/" + seedPrefix + idx + "/400/400";
+            img.onerror = function () {
+              cell.innerHTML = "<div class=\"img-ph\">图片 " + (idx + 1) + "</div>";
+            };
+            cell.appendChild(img);
+            el.appendChild(cell);
+          })(i);
         }
-        el.appendChild(cell(true, urls[0], "主图（演示占位）"));
-        for (var i = 1; i <= 4; i++) el.appendChild(cell(false, urls[i], "细节图 " + i));
       }
-      buildMosaic("mtImages", "voucher");
-      buildMosaic("stImages", "voucher");
+
+      fillImageGrid("listedImages", "listv3", 6);
+      fillImageGrid("storeImages", "storev3", 6);
     })();
   </script>
 </body>
