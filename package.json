@@ -1,0 +1,11 @@
+{
+  "name": "xiaoshou-work-order-demo",
+  "private": true,
+  "description": "静态演示页；发版改 release-config.js 后运行 npm run sync-release（或由 GitHub Actions 自动同步）",
+  "scripts": {
+    "sync-release": "node sync-release.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

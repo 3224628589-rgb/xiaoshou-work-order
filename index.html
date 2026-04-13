@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- 版本由 release-config.js 的 window.__DEMO_APP_VERSION__ 写入，发版只改 release-config.js -->
+  <!-- 缓解整页被浏览器长期缓存（最终以站点 CDN/服务器 Cache-Control 为准） -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <!-- 版本由 release-config.js 写入；?v= 由根目录 node sync-release.mjs 与 release-config 同步 -->
   <meta name="app-static-version" content="" />
-  <script src="release-config.js"></script>
+  <script src="release-config.js?v=V3.2"></script>
   <title>邻药汇仓店管理系统</title>
   <style>
     :root {

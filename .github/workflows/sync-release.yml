@@ -1,0 +1,43 @@
+# 推送修改了 release-config.js 时，自动运行 sync-release.mjs 并提交 HTML 更新（避免忘记同步 ?v= 导致缓存旧脚本）
+name: Sync release version to HTML
+
+on:
+  # 仅当本次推送里包含 release-config.js 的变更时运行（自动提交 HTML 后的推送不含该文件，不会死循环）
+  push:
+    paths:
+      - "release-config.js"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 同步 HTML 中的 ?v= 与内联回退版本
+        run: node sync-release.mjs
+
+      - name: 若有变更则提交并推送
+        run: |
+          git add index.html "异常凭证-H5-demo.html"
+          if git diff --cached --quiet; then
+            echo "无需提交（已与 release-config.js 一致）"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: 同步 release-config 版本到 HTML（缓存参数）"
+          git push
