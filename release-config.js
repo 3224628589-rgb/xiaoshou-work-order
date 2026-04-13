@@ -2,4 +2,4 @@
  * 演示站发版版本号 —— 唯一真源（SSOT）
  * 升级版本时只改下面这一处字符串；助手发版时会同步改此处。
  */
-window.__DEMO_APP_VERSION__ = "V3.1";
+window.__DEMO_APP_VERSION__ = "V3.2";
