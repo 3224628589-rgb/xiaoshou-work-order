@@ -131,6 +131,15 @@
       text-align: center;
       line-height: 1.6;
     }
+    .page-version-line {
+      margin-top: 12px;
+      padding-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1890ff;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
     .sub-block-title {
       font-size: 13px;
       font-weight: 600;
@@ -232,6 +241,7 @@
     <p class="footer-note" id="footerNote">
       本页为销售工单异常业务信息快照。链接 <code>v</code> 参数用于发版刷新缓存；正式环境由服务端下发完整字段与图片 URL。
     </p>
+    <p class="page-version-line" id="pageVersionLine" aria-label="演示版本号"></p>
   </div>
   <script>
     (function () {
@@ -241,6 +251,8 @@
           : "V3.2";
       var metaVer = document.querySelector('meta[name="app-static-version"]');
       if (metaVer) metaVer.setAttribute("content", APP_VER);
+      var verLine = document.getElementById("pageVersionLine");
+      if (verLine) verLine.textContent = "版本号：" + APP_VER;
       var foot = document.getElementById("footerNote");
       if (foot) {
         foot.innerHTML =

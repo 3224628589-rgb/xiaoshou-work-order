@@ -33,8 +33,20 @@
       background: var(--bg-page);
       min-height: 100vh;
       overflow-x: auto;
+      display: flex;
+      flex-direction: column;
     }
-    .app { display: flex; min-height: 100vh; }
+    .app { flex: 1; display: flex; min-height: 0; }
+    .app-version-footer {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 10px 16px 14px;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.45);
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+      letter-spacing: 0.02em;
+    }
     .sidebar {
       width: 220px; flex-shrink: 0; background: var(--sidebar-bg); color: var(--sidebar-text);
       padding: 16px 0; display: flex; flex-direction: column; border-right: 1px solid var(--sidebar-border);
@@ -482,6 +494,7 @@
       </main>
     </div>
   </div>
+  <footer class="app-version-footer" id="appVersionFooter" aria-label="演示版本号"></footer>
 
   <div id="exceptionHoverTip" class="exception-hover-tip" role="tooltip"></div>
 
@@ -554,6 +567,8 @@
           : "V3.2";
       var metaVer = document.querySelector('meta[name="app-static-version"]');
       if (metaVer) metaVer.setAttribute("content", APP_VER);
+      var appVerFoot = document.getElementById("appVersionFooter");
+      if (appVerFoot) appVerFoot.textContent = "版本号：" + APP_VER;
       /**
        * 部署到 GitHub Pages 后填写站点根路径（末尾必须带 /）。
        * 例：https://你的用户名.github.io/仓库名/
