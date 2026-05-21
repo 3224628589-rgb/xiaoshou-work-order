@@ -199,6 +199,7 @@
       width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; font-family: inherit; background: #fff;
     }
     .modal-body select { margin-bottom: 18px; cursor: pointer; min-height: 36px; }
+    .modal-extra-field[hidden] { display: none !important; }
     .quick-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
     .quick-tag {
       padding: 6px 12px; font-size: 13px; color: var(--text-secondary); background: #f5f5f5;
@@ -519,6 +520,12 @@
           <option value="duplicate">订单重复</option>
           <option value="other">其他</option>
         </select>
+        <div id="excCarrierWrap" class="modal-extra-field" hidden>
+          <label class="modal-field-label" for="excCarrier">配送商：</label>
+          <select id="excCarrier">
+            <option value="dada" selected>达达</option>
+          </select>
+        </div>
         <label class="modal-field-label" for="excDesc">异常描述：</label>
         <div class="quick-tags" id="quickTags">
           <button type="button" class="quick-tag" data-text="顾客反馈不是我要的货">顾客反馈不是我要的货</button>
@@ -619,7 +626,20 @@
       var modal = document.getElementById("exceptionModal");
       var modalContext = document.getElementById("modalContext");
       var excType = document.getElementById("excType");
+      var excCarrierWrap = document.getElementById("excCarrierWrap");
+      var excCarrier = document.getElementById("excCarrier");
       var excDesc = document.getElementById("excDesc");
+      var EXC_TYPE_OPTIONS = [
+        { value: "meituan_mismatch", label: "美团商品与实物不符" },
+        { value: "short", label: "缺货/少货" },
+        { value: "wrong", label: "错品/错批号" },
+        { value: "damage", label: "破损/质量问题" },
+        { value: "trace", label: "溯源码异常" },
+        { value: "duplicate", label: "订单重复" },
+        { value: "other", label: "其他" },
+      ];
+      var EXC_TYPE_COMPENSATION = { value: "compensation", label: "赔付工单" };
+      var CARRIER_OPTIONS = [{ value: "dada", label: "达达" }];
       var closeBtn = document.getElementById("modalClose");
       var submitBtn = document.getElementById("modalSubmit");
       var orderHeadZone = document.getElementById("orderHeadZone");
@@ -721,6 +741,38 @@
         return "本单商品";
       }
 
+      function isSalesSortLineException() {
+        return lastExc.page === "sales" && lastExc.scope === "line";
+      }
+
+      function renderExcTypeOptions() {
+        var opts = EXC_TYPE_OPTIONS.slice();
+        if (isSalesSortLineException()) opts.push(EXC_TYPE_COMPENSATION);
+        excType.innerHTML = "";
+        opts.forEach(function (o) {
+          var opt = document.createElement("option");
+          opt.value = o.value;
+          opt.textContent = o.label;
+          excType.appendChild(opt);
+        });
+      }
+
+      function renderCarrierOptions() {
+        excCarrier.innerHTML = "";
+        CARRIER_OPTIONS.forEach(function (o) {
+          var opt = document.createElement("option");
+          opt.value = o.value;
+          opt.textContent = o.label;
+          excCarrier.appendChild(opt);
+        });
+        excCarrier.value = CARRIER_OPTIONS[0].value;
+      }
+
+      function updateCarrierFieldVisibility() {
+        var show = isSalesSortLineException() && excType.value === EXC_TYPE_COMPENSATION.value;
+        excCarrierWrap.hidden = !show;
+      }
+
       function openModal(scope, line, productName, page) {
         hideHoverTip();
         lastExc.scope = scope || "order";
@@ -728,6 +780,8 @@
         lastExc.product = productName || "";
         lastExc.page = page || "review";
         lastExc.listingProduct = resolveListingProductLabel();
+        renderExcTypeOptions();
+        renderCarrierOptions();
         if (lastExc.page === "sales") {
           if (lastExc.scope === "order") {
             modalContext.textContent = "提报范围：销售订单详情（整单）· 订单号 113136 · 外部订单号 3202072780489226439";
@@ -742,6 +796,7 @@
           }
         }
         excType.value = "meituan_mismatch";
+        updateCarrierFieldVisibility();
         excDesc.value = "";
         excFiles.value = "";
         renderFileList();
@@ -784,6 +839,7 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); excFiles.click(); }
       });
       excFiles.addEventListener("change", renderFileList);
+      excType.addEventListener("change", updateCarrierFieldVisibility);
 
       function openShareLinkModal(url) {
         var label = (lastExc.listingProduct || "").trim() || "本单商品";
@@ -830,6 +886,21 @@
 
       submitBtn.addEventListener("click", function () {
         if (!excType.value) { alert("请先选择异常类型。"); return; }
+        if (isSalesSortLineException() && excType.value === EXC_TYPE_COMPENSATION.value) {
+          var carrierLabel = excCarrier.options[excCarrier.selectedIndex]
+            ? excCarrier.options[excCarrier.selectedIndex].textContent
+            : "达达";
+          closeModal();
+          alert(
+            "赔付工单已提交（演示）\n配送商：" +
+              carrierLabel +
+              "\n明细序号：" +
+              (lastExc.line || "—") +
+              " · " +
+              (lastExc.product || "")
+          );
+          return;
+        }
         var ticketId = "GD" + String(Date.now()).slice(-10);
         var shareBase = buildCredentialShareUrl();
         var sp = shareBase.searchParams;
