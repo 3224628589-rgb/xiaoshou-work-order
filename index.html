@@ -741,13 +741,13 @@
         return "本单商品";
       }
 
-      function isSalesSortLineException() {
-        return lastExc.page === "sales" && lastExc.scope === "line";
+      function isSalesOrderSummaryException() {
+        return lastExc.page === "sales" && lastExc.scope === "order";
       }
 
       function renderExcTypeOptions() {
         var opts = EXC_TYPE_OPTIONS.slice();
-        if (isSalesSortLineException()) opts.push(EXC_TYPE_COMPENSATION);
+        if (isSalesOrderSummaryException()) opts.push(EXC_TYPE_COMPENSATION);
         excType.innerHTML = "";
         opts.forEach(function (o) {
           var opt = document.createElement("option");
@@ -769,7 +769,7 @@
       }
 
       function updateCarrierFieldVisibility() {
-        var show = isSalesSortLineException() && excType.value === EXC_TYPE_COMPENSATION.value;
+        var show = isSalesOrderSummaryException() && excType.value === EXC_TYPE_COMPENSATION.value;
         excCarrierWrap.hidden = !show;
       }
 
@@ -886,19 +886,12 @@
 
       submitBtn.addEventListener("click", function () {
         if (!excType.value) { alert("请先选择异常类型。"); return; }
-        if (isSalesSortLineException() && excType.value === EXC_TYPE_COMPENSATION.value) {
+        if (isSalesOrderSummaryException() && excType.value === EXC_TYPE_COMPENSATION.value) {
           var carrierLabel = excCarrier.options[excCarrier.selectedIndex]
             ? excCarrier.options[excCarrier.selectedIndex].textContent
             : "达达";
           closeModal();
-          alert(
-            "赔付工单已提交（演示）\n配送商：" +
-              carrierLabel +
-              "\n明细序号：" +
-              (lastExc.line || "—") +
-              " · " +
-              (lastExc.product || "")
-          );
+          alert("赔付工单已提交（演示）\n配送商：" + carrierLabel + "\n提报范围：销售订单详情（整单）");
           return;
         }
         var ticketId = "GD" + String(Date.now()).slice(-10);
